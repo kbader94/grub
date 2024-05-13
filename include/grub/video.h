@@ -79,7 +79,8 @@ enum grub_video_rotation
   {
     GRUB_VIDEO_ROTATE_NONE,
     GRUB_VIDEO_ROTATE_90,
-    GRUB_VIDEO_ROTATE_270,
+    GRUB_VIDEO_ROTATE_180,
+    GRUB_VIDEO_ROTATE_270
   };
 
 /* The basic render target representing the whole display.  This always

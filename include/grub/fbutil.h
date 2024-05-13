@@ -61,4 +61,18 @@ grub_video_color_t get_pixel (struct grub_video_fbblit_info *source,
 void set_pixel (struct grub_video_fbblit_info *source,
                 unsigned int x, unsigned int y, grub_video_color_t color);
 
+static inline grub_uint8_t
+alpha_dilute (grub_uint8_t bg, grub_uint8_t fg, grub_uint8_t alpha)
+{
+  grub_uint16_t s;
+  grub_uint16_t h, l;
+  s = (fg * alpha) + (bg * (255 ^ alpha));
+  /* Optimised division by 255.  */
+  h = s >> 8;
+  l = s & 0xff;
+  if (h + l >= 255)
+    h++;
+  return h;
+}
+
 #endif /* ! GRUB_VBEUTIL_MACHINE_HEADER */

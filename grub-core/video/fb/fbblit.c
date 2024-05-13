@@ -29,41 +29,11 @@
 
 #include <grub/video_fb.h>
 #include <grub/fbblit.h>
+#include <grub/fbblit_trans.h>
 #include <grub/fbutil.h>
 #include <grub/misc.h>
 #include <grub/types.h>
 #include <grub/video.h>
-
-static inline grub_uint8_t
-alpha_dilute (grub_uint8_t bg, grub_uint8_t fg, grub_uint8_t alpha)
-{
-  grub_uint16_t s;
-  grub_uint16_t h, l;
-  s = (fg * alpha) + (bg * (255 ^ alpha));
-  /* Optimised division by 255.  */
-  h = s >> 8;
-  l = s & 0xff;
-  if (h + l >= 255)
-    h++;
-  return h;
-}
-
-#define SUFFIX(x) x
-#define ADD_X 0
-#define ADD_Y 0
-#define TRANS_X(x, y) x
-#define TRANS_Y(x, y) y
-#include "fbblit_rot.c"
-
-#define SUFFIX(x) x ## _90
-#define TRANS_X(x, y) (y)
-#define TRANS_Y(x, y) (-(x))
-#include "fbblit_rot.c"
-
-#define SUFFIX(x) x ## _270
-#define TRANS_X(x, y) (-(y))
-#define TRANS_Y(x, y) (x)
-#include "fbblit_rot.c"
 
 /* Block copy replacing blitter.  Works with modes multiple of 8 bits.  */
 static void
@@ -1881,6 +1851,9 @@ grub_video_fb_dispatch_blit (struct grub_video_fbblit_info *target,
 	  return;
 	}
     }
+
+  /* TODO: dispatch fbblit_ops_180 */
+
   if (target->mode_info->rotation == GRUB_VIDEO_ROTATE_270)
     {
       int nx = target->mode_info->height - y;

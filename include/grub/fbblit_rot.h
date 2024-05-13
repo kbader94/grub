@@ -1,3 +1,14 @@
+#include <grub/video_fb.h>
+#include <grub/fbblit.h>
+#include <grub/fbutil.h>
+#include <grub/misc.h>
+#include <grub/types.h>
+#include <grub/video.h>
+
+/* NOTE: Don't include this header, include fbblit_trans instead. */
+
+
+/* Generic replacing blitter (slow).  Works for every supported format.  */
 /* Generic replacing blitter (slow).  Works for every supported format.  */
 static void
 SUFFIX(grub_video_fbblit_replace) (struct grub_video_fbblit_info *dst,

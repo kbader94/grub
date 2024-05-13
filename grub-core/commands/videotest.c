@@ -44,6 +44,7 @@ grub_cmd_videotest (grub_command_t cmd __attribute__ ((unused)),
   struct grub_video_render_target *text_layer;
   grub_video_color_t palette[16];
   const char *mode = NULL;
+ // const char *rot_env = NULL;
 
 #ifdef GRUB_MACHINE_PCBIOS
   if (grub_strcmp (cmd->name, "vbetest") == 0)
@@ -60,6 +61,7 @@ grub_cmd_videotest (grub_command_t cmd __attribute__ ((unused)),
     return err;
 
   grub_video_get_viewport (&x, &y, &width, &height);
+  
 
   {
     const char *str;
@@ -72,7 +74,7 @@ grub_cmd_videotest (grub_command_t cmd __attribute__ ((unused)),
 
     if (grub_video_create_render_target (&text_layer, width, height,
 					 GRUB_VIDEO_MODE_TYPE_RGB
-					 | GRUB_VIDEO_MODE_TYPE_ALPHA)
+					 | GRUB_VIDEO_MODE_TYPE_ALPHA )
 	|| !text_layer)
       goto fail;
 

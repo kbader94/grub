@@ -510,9 +510,9 @@ redraw_screen_rect (unsigned int x, unsigned int y,
   else
     /* Render text layer as replaced (to get texts background color).  */
     grub_video_blit_render_target (text_layer, GRUB_VIDEO_BLIT_REPLACE, x, y,
-                                   x - virtual_screen.offset_x,
-                                   y - virtual_screen.offset_y,
-                                   width, height);
+                                   x - virtual_screen.offset_x - 1,
+                                   y - virtual_screen.offset_y - 1,
+                                   width + 1, height + 1);
 
   /* Restore saved viewport.  */
   grub_video_set_viewport (saved_view.x, saved_view.y,
