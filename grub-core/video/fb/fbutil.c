@@ -149,3 +149,59 @@ set_pixel (struct grub_video_fbblit_info *source,
       break;
     }
 }
+
+int 
+trans_x(int x,int y, struct grub_video_mode_info *mode_info)
+{
+    switch (mode_info->rotation) {
+        case GRUB_VIDEO_ROTATE_90:
+            return y;
+        case GRUB_VIDEO_ROTATE_180:
+            return -x;
+        case GRUB_VIDEO_ROTATE_270:
+            return -y;
+        case GRUB_VIDEO_ROTATE_NONE:
+        default:
+            return x;
+    }
+}
+
+int 
+trans_y(int x, int y, struct grub_video_mode_info *mode_info)
+{
+    switch (mode_info->rotation) {
+        case GRUB_VIDEO_ROTATE_90:
+            return -x;
+        case GRUB_VIDEO_ROTATE_180:
+            return -y;
+        case GRUB_VIDEO_ROTATE_270:
+            return x;
+        case GRUB_VIDEO_ROTATE_NONE:
+        default:
+            return y;
+    }
+}
+
+grub_video_rect_t grub_video_transform_rectangle (grub_video_rect_t r, const struct grub_video_mode_info *mode_info)
+{
+  grub_video_rect_t n;
+  switch (mode_info->rotation)
+    {
+    case GRUB_VIDEO_ROTATE_NONE:
+      return r;
+    case GRUB_VIDEO_ROTATE_90:
+      n.width = r.height;
+      n.height = r.width;
+      n.x = r.y;
+      n.y = mode_info->width - r.x - r.width;
+      return n;
+    case GRUB_VIDEO_ROTATE_180:
+    case GRUB_VIDEO_ROTATE_270:
+      n.width = r.height;
+      n.height = r.width;
+      n.x = mode_info->height - r.y - r.height;
+      n.y = r.x;
+      return n;
+    }
+  return r;
+}

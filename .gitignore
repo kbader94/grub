@@ -6,6 +6,7 @@
 *.a
 *.exec
 *.exec.exe
+*.gdb
 *.image
 *.image.exe
 *.img
@@ -15,8 +16,11 @@
 *.marker
 *.mod
 *.o
+*.out
 *.pf2
+*.pid
 *.pp
+*.patch
 *.pyc
 *.trs
 *~
@@ -56,12 +60,14 @@ mdate-sh
 mod-*.c
 update-grub_lib
 widthspec.bin
+settings.json
 
 #
 # Ignore patterns relative to this .gitignore file's directory.
 #
 /00_header
 /10_*
+/25_bli
 /20_linux_xen
 /30_os-prober
 /30_uefi-firmware
@@ -279,3 +285,19 @@ widthspec.bin
 /xfs_test
 /xzcompress_test
 /zfs_test
+
+#
+grub-shell-luks-tester
+grub-core/gdb_helper.py
+util/bash-completion.d/grub-bios-setup
+util/bash-completion.d/grub-editenv
+util/bash-completion.d/grub-install
+util/bash-completion.d/grub-mkconfig
+util/bash-completion.d/grub-mkfont
+util/bash-completion.d/grub-mkimage
+util/bash-completion.d/grub-mkpasswd-pbkdf2
+util/bash-completion.d/grub-probe
+util/bash-completion.d/grub-reboot
+util/bash-completion.d/grub-script-check
+util/bash-completion.d/grub-set-default
+util/bash-completion.d/grub-sparc64-setup

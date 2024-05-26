@@ -172,7 +172,7 @@ grub_video_bochs_video_fini (void)
 static grub_err_t
 doublebuf_pageflipping_set_page (int page)
 {
-  int start = framebuffer.mode_info.height * page;
+  int start = framebuffer.mode_info.original_height * page;
 
   vbe_write (start, BOCHS_VBE_Y_OFFSET);
   return GRUB_ERR_NONE;
@@ -323,6 +323,8 @@ grub_video_bochs_setup (unsigned int width, unsigned int height,
   /* Fill mode info details.  */
   framebuffer.mode_info.width = width;
   framebuffer.mode_info.height = height;
+  framebuffer.mode_info.original_width = width;
+  framebuffer.mode_info.original_height = height;
   framebuffer.mode_info.mode_type = GRUB_VIDEO_MODE_TYPE_RGB;
   framebuffer.mode_info.bpp = depth;
   framebuffer.mode_info.bytes_per_pixel = bytes_per_pixel;
