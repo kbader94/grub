@@ -185,28 +185,38 @@ grub_video_fb_fill_dispatch (struct grub_video_fbblit_info *target,
 			     grub_video_color_t color, int x, int y,
 			     unsigned int width, unsigned int height)
 {
+  grub_video_rect_t orig = {
+    .x = x,
+    .y = y,
+    .width = width,
+    .height = height
+  };
+  grub_video_rect_t tran = grub_video_transform_rectangle (orig, target->mode_info);
+  
   /* Try to figure out more optimized version.  Note that color is already
      mapped to target format so we can make assumptions based on that.  */
   switch (target->mode_info->bytes_per_pixel)
     {
     case 4:
-      grub_video_fbfill_direct32 (target, color, x, y,
-				  width, height);
+      grub_video_fbfill_direct32 (target, color, tran.x, tran.y,
+				  tran.width, tran.height);
       return;
     case 3:
-      grub_video_fbfill_direct24 (target, color, x, y,
-				  width, height);
+      grub_video_fbfill_direct24 (target, color, tran.x, tran.y,
+				  tran.width, tran.height);
+      return;
       return;
     case 2:
-      grub_video_fbfill_direct16 (target, color, x, y,
-                                        width, height);
+      grub_video_fbfill_direct16 (target, color, tran.x, tran.y,
+				  tran.width, tran.height);
       return;
     case 1:
-      grub_video_fbfill_direct8 (target, color, x, y,
-				       width, height);
+      grub_video_fbfill_direct8 (target, color, tran.x, tran.y,
+				  tran.width, tran.height);
       return;
     }
 
   /* No optimized version found, use default (slow) filler.  */
-  grub_video_fbfill (target, color, x, y, width, height);
+  grub_video_fbfill  (target, color, tran.x, tran.y,
+				  tran.width, tran.height);
 }

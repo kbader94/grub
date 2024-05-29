@@ -62,7 +62,8 @@ grub_video_fbblit_replace (struct grub_video_fbblit_info *dst,
 	  dst_color = grub_video_fb_map_rgba (src_red, src_green,
 					      src_blue, src_alpha);
 
-	  set_pixel (dst, x + i, y + j, dst_color);
+	  set_pixel (dst, x + trans_x(i, j, dst->mode_info), 
+               y + trans_y(i,j, dst->mode_info), dst_color);
 	}
     }
 }
@@ -1195,11 +1196,11 @@ grub_video_fbblit_blend (struct grub_video_fbblit_info *dst,
             {
               dst_color = grub_video_fb_map_rgba (src_red, src_green,
 						  src_blue, src_alpha);
-              set_pixel (dst, x + i, y + j, dst_color);
+              set_pixel (dst, x + trans_x(i, j, dst->mode_info), y + trans_y(i,j, dst->mode_info), dst_color);
               continue;
             }
 
-          dst_color = get_pixel (dst, x + i, y + j);
+          dst_color = get_pixel (dst, x + trans_x(i, j, dst->mode_info), y + trans_y(i,j, dst->mode_info));
 
           grub_video_fb_unmap_color_int (dst, dst_color, &dst_red,
 					 &dst_green, &dst_blue, &dst_alpha);
@@ -1212,7 +1213,7 @@ grub_video_fbblit_blend (struct grub_video_fbblit_info *dst,
           dst_color = grub_video_fb_map_rgba (dst_red, dst_green, dst_blue,
 					      dst_alpha);
 
-          set_pixel (dst, x + i, y + j, dst_color);
+          set_pixel (dst, x + trans_x(i, j, dst->mode_info), y + trans_y(i,j, dst->mode_info), dst_color);
         }
     }
 }
@@ -1936,6 +1937,68 @@ grub_video_fb_dispatch_blit (struct grub_video_fbblit_info *target,
 			     unsigned int width, unsigned int height,
 			     int offset_x, int offset_y)
 {
+  if (target->mode_info->rotation == GRUB_VIDEO_ROTATE_90)
+    {
+      int nx = y;
+      int ny = target->mode_info->width - x - 1;
+      if (oper == GRUB_VIDEO_BLIT_REPLACE)
+	{
+	  /* No optimized replace operator found, use default (slow) blitter.  */
+	  grub_video_fbblit_replace (target, source, nx, ny, width, height,
+					offset_x, offset_y);
+	  return;
+	}
+      else
+	{
+	  /* No optimized replace operator found, use default (slow) blitter.  */
+	  grub_video_fbblit_blend (target, source, nx, ny, width, height,
+				      offset_x, offset_y);
+	  return;
+	}
+    }
+
+  if (target->mode_info->rotation == GRUB_VIDEO_ROTATE_180)
+    {
+      int nx = target->mode_info->width - x - 1;
+      int ny = target->mode_info->height - y - 1;
+      if (oper == GRUB_VIDEO_BLIT_REPLACE)
+	{
+	  /* No optimized replace operator found, use default (slow) blitter.  */
+	  grub_video_fbblit_replace (target, source, nx, ny, width, height,
+					 offset_x, offset_y);
+	  return;
+	}
+      else
+	{
+	  /* No optimized replace operator found, use default (slow) blitter.  */
+	  grub_video_fbblit_blend (target, source, nx, ny, width, height,
+				       offset_x, offset_y);
+	  return;
+	}
+
+      
+    }
+
+  if (target->mode_info->rotation == GRUB_VIDEO_ROTATE_270)
+    {
+      int nx = target->mode_info->height - y - 1;
+      int ny = x;
+      if (oper == GRUB_VIDEO_BLIT_REPLACE)
+	{
+	  /* No optimized replace operator found, use default (slow) blitter.  */
+	  grub_video_fbblit_replace (target, source, nx, ny, width, height,
+					 offset_x, offset_y);
+	  return;
+	}
+      else
+	{
+	  /* No optimized replace operator found, use default (slow) blitter.  */
+	  grub_video_fbblit_blend (target, source, nx, ny, width, height,
+				       offset_x, offset_y);
+	  return;
+	}
+    }
+
   if (oper == GRUB_VIDEO_BLIT_REPLACE)
     {
       /* Try to figure out more optimized version for replace operator.  */
