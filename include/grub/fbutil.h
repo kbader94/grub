@@ -61,4 +61,13 @@ grub_video_color_t get_pixel (struct grub_video_fbblit_info *source,
 void set_pixel (struct grub_video_fbblit_info *source,
                 unsigned int x, unsigned int y, grub_video_color_t color);
 
+int 
+trans_x(int x,int y, struct grub_video_mode_info *mode_info);
+
+int 
+trans_y(int x, int y, struct grub_video_mode_info *mode_info);
+
+grub_video_rect_t grub_video_transform_rectangle (grub_video_rect_t r, 
+                                                  const struct grub_video_mode_info *mode_info);
+
 #endif /* ! GRUB_VBEUTIL_MACHINE_HEADER */
