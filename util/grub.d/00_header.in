@@ -47,6 +47,22 @@ if [ -s \$prefix/grubenv ]; then
   load_env
 fi
 EOF
+
+# Set fb rotation for grub
+if [ "x$GRUB_FB_ROTATION" != x ]; then
+    case "${GRUB_FB_ROTATION}" in
+        inverted | 180)
+    echo set rotation=180
+            ;;
+        left | 90)
+    echo set rotation=90
+            ;;
+        right | 270)
+    echo set rotation=270
+            ;;
+    esac
+fi
+
 if [ "x$GRUB_BUTTON_CMOS_ADDRESS" != "x" ]; then
     cat <<EOF
 if cmostest $GRUB_BUTTON_CMOS_ADDRESS ; then
