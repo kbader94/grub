@@ -120,10 +120,42 @@ linux_entry ()
 	  && grep -qx "CONFIG_VT_HW_CONSOLE_BINDING=y" "${config}" 2> /dev/null; then
 	  echo "	set gfxpayload=keep" | sed "s/^/$submenu_indentation/"
       fi
+
+    # Set fb rotation by default
+    case "${GRUB_FB_ROTATION}" in
+    inverted | 180)
+      args="$args fbcon=rotate:2"
+      ;;
+    left | 90)
+      args="$args fbcon=rotate:3"
+      ;;
+    right | 270)
+      args="$args fbcon=rotate:1"
+      ;;
+    esac
+
   else
       if [ "x$GRUB_GFXPAYLOAD_LINUX" != xtext ]; then
 	  echo "	load_video" | sed "s/^/$submenu_indentation/"
       fi
+
+    if [ "x$GRUB_GFXPAYLOAD_LINUX" = "xkeep" ]; then
+
+      # Set fb rotation if gfxpayload == keep
+      case "${GRUB_FB_ROTATION}" in
+      inverted | 180)
+        args="$args fbcon=rotate:2"
+        ;;
+      left | 90)
+        args="$args fbcon=rotate:3"
+        ;;
+      right | 270)
+        args="$args fbcon=rotate:1"
+        ;;
+      esac
+
+    fi
+
       echo "	set gfxpayload=$GRUB_GFXPAYLOAD_LINUX" | sed "s/^/$submenu_indentation/"
   fi
 
