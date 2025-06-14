@@ -267,6 +267,7 @@ find_card (grub_pci_device_t dev, grub_pci_id_t pciid, void *data)
 
 static grub_err_t
 grub_video_cirrus_setup (unsigned int width, unsigned int height,
+       grub_video_rotation_t rotation,
 			 grub_video_mode_type_t mode_type,
 			 grub_video_mode_type_t mode_mask)
 {
@@ -405,6 +406,7 @@ grub_video_cirrus_setup (unsigned int width, unsigned int height,
   /* Fill mode info details.  */
   framebuffer.mode_info.width = width;
   framebuffer.mode_info.height = height;
+  framebuffer.mode_info.rotation = rotation;
   framebuffer.mode_info.mode_type = GRUB_VIDEO_MODE_TYPE_RGB;
   framebuffer.mode_info.bpp = depth;
   framebuffer.mode_info.bytes_per_pixel = bytes_per_pixel;

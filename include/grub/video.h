@@ -75,13 +75,13 @@ typedef enum grub_video_mode_type
     GRUB_VIDEO_MODE_TYPE_INFO_MASK        = 0x00FF0000,
   } grub_video_mode_type_t;
 
-enum grub_video_rotation
+  typedef enum grub_video_rotation_type
   {
     GRUB_VIDEO_ROTATE_NONE,
     GRUB_VIDEO_ROTATE_90,
     GRUB_VIDEO_ROTATE_180,
     GRUB_VIDEO_ROTATE_270
-  };
+  } grub_video_rotation_t; 
 
 /* The basic render target representing the whole display.  This always
    renders to the back buffer when double-buffering is in use.  */
@@ -142,7 +142,7 @@ struct grub_video_mode_info
   /* Height of the screen, after the rotation.  */
   unsigned int height;
 
-  enum grub_video_rotation rotation;
+  grub_video_rotation_t rotation;
 
   /* Mode type bitmask.  Contains information like is it Index color or
      RGB mode.  */
@@ -344,8 +344,9 @@ struct grub_video_adapter
   grub_err_t (*fini) (void);
 
   grub_err_t (*setup) (unsigned int width,  unsigned int height,
+                       grub_video_rotation_t rotation,
                        grub_video_mode_type_t mode_type,
-		       grub_video_mode_type_t mode_mask);
+		                   grub_video_mode_type_t mode_mask);
 
   grub_err_t (*get_info) (struct grub_video_mode_info *mode_info);
 

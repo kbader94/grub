@@ -976,8 +976,9 @@ grub_video_vbe_iterate (int (*hook) (const struct grub_video_mode_info *info, vo
 
 static grub_err_t
 grub_video_vbe_setup (unsigned int width, unsigned int height,
+                      grub_video_rotation_t rotation,
                       grub_video_mode_type_t mode_type,
-		      grub_video_mode_type_t mode_mask)
+		                  grub_video_mode_type_t mode_mask)
 {
   grub_uint16_t *p;
   struct grub_vbe_mode_info_block vbe_mode_info;
@@ -1116,6 +1117,8 @@ grub_video_vbe_setup (unsigned int width, unsigned int height,
 		     &framebuffer.mode_info);
 
       {
+      framebuffer.mode_info.rotation = rotation;
+
 	/* Get video RAM size in bytes.  */
 	grub_size_t vram_size = controller_info.total_memory << 16;
 	grub_size_t page_size;        /* The size of a page in bytes.  */
