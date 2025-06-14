@@ -87,7 +87,9 @@ find_card (grub_pci_device_t dev, grub_pci_id_t pciid, void *data)
 
 static grub_err_t
 grub_video_radeon_yeeloong3a_setup (unsigned int width, unsigned int height,
-			unsigned int mode_type, unsigned int mode_mask __attribute__ ((unused)))
+                                    grub_video_rotation_t rotation,
+			                              unsigned int mode_type, 
+                                unsigned int mode_mask __attribute__ ((unused)))
 {
   int depth;
   grub_err_t err;
@@ -110,6 +112,7 @@ grub_video_radeon_yeeloong3a_setup (unsigned int width, unsigned int height,
   /* Fill mode info details.  */
   framebuffer.mode_info.width = 800;
   framebuffer.mode_info.height = 600;
+  framebuffer.mode_info.rotation = rotation;
   framebuffer.mode_info.mode_type = GRUB_VIDEO_MODE_TYPE_RGB;
   framebuffer.mode_info.bpp = 16;
   framebuffer.mode_info.bytes_per_pixel = 2;

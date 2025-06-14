@@ -200,6 +200,7 @@ grub_video_ieee1275_fill_mode_info (grub_ieee1275_phandle_t dev,
 
 static grub_err_t
 grub_video_ieee1275_setup (unsigned int width, unsigned int height,
+         grub_video_rotation_t rotation,
 			   unsigned int mode_type __attribute__ ((unused)),
 			   unsigned int mode_mask __attribute__ ((unused)))
 {
@@ -240,6 +241,8 @@ grub_video_ieee1275_setup (unsigned int width, unsigned int height,
       grub_dprintf ("video", "IEEE1275: couldn't fill mode info\n");
       return err;
     }
+
+  framebuffer.mode_info.rotation = rotation;
 
   if (grub_ieee1275_get_integer_property (dev, "address", (void *) &address,
 					  sizeof (address), 0))

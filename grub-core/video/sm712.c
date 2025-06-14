@@ -388,7 +388,9 @@ find_card (grub_pci_device_t dev, grub_pci_id_t pciid, void *data)
 
 static grub_err_t
 grub_video_sm712_setup (unsigned int width, unsigned int height,
-			unsigned int mode_type, unsigned int mode_mask __attribute__ ((unused)))
+                        grub_video_rotation_t rotation,
+			                  unsigned int mode_type, 
+                        unsigned int mode_mask __attribute__ ((unused)))
 {
   unsigned i;
 #if !defined (TEST) && !defined(GENINIT)
@@ -411,6 +413,7 @@ grub_video_sm712_setup (unsigned int width, unsigned int height,
   /* Fill mode info details.  */
   framebuffer.mode_info.width = 1024;
   framebuffer.mode_info.height = 600;
+  framebuffer.mode_info.rotation = rotation;
   framebuffer.mode_info.mode_type = (GRUB_VIDEO_MODE_TYPE_RGB
 				     | GRUB_VIDEO_MODE_TYPE_DOUBLE_BUFFERED
 				     | GRUB_VIDEO_MODE_TYPE_UPDATING_SWAP);

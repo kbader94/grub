@@ -86,7 +86,9 @@ get_mask_size (grub_uint32_t mask)
 
 static grub_err_t
 grub_video_sdl_setup (unsigned int width, unsigned int height,
-                      unsigned int mode_type, unsigned int mode_mask __attribute__ ((unused)))
+                      grub_video_rotation_t rotation,
+                      unsigned int mode_type, 
+                      unsigned int mode_mask __attribute__ ((unused)))
 {
   int depth;
   int flags = 0;
@@ -152,6 +154,7 @@ grub_video_sdl_setup (unsigned int width, unsigned int height,
   mode_info.mode_type = 0;
   mode_info.width = surface->w;
   mode_info.height = surface->h;
+  mode_info.rotation = rotation;
 #ifndef HAVE_SDL2
   if (surface->flags & SDL_DOUBLEBUF)
     mode_info.mode_type

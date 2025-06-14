@@ -135,6 +135,7 @@ grub_video_capture_end (void)
       if (saved->init)
 	saved->init ();
       if (saved->setup)
-	saved->setup (saved_mode_info.width, saved_mode_info.height, 0, 0);
+	saved->setup (saved_mode_info.width, saved_mode_info.height, 
+                GRUB_VIDEO_ROTATE_NONE, 0, 0);
     }
 }

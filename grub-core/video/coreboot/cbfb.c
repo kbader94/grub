@@ -51,6 +51,7 @@ grub_video_cbfb_fill_mode_info (struct grub_video_mode_info *out)
 
   out->width = grub_video_coreboot_fbtable->width;
   out->height = grub_video_coreboot_fbtable->height;
+  out->rotation = grub_video_coreboot_fbtable->rotation;
   out->pitch = grub_video_coreboot_fbtable->pitch;
 
   out->red_field_pos = grub_video_coreboot_fbtable->red_field_pos;
@@ -73,6 +74,7 @@ grub_video_cbfb_fill_mode_info (struct grub_video_mode_info *out)
 
 static grub_err_t
 grub_video_cbfb_setup (unsigned int width, unsigned int height,
+         grub_video_rotation_t rotation,
 			   unsigned int mode_type __attribute__ ((unused)),
 			   unsigned int mode_mask __attribute__ ((unused)))
 {
@@ -91,6 +93,9 @@ grub_video_cbfb_setup (unsigned int width, unsigned int height,
       grub_dprintf ("video", "CBFB: couldn't fill mode info\n");
       return err;
     }
+
+  /* Rotation isn't passed from coreboot so set it here */
+  framebuffer.mode_info.rotation = rotation;
 
   framebuffer.ptr = (void *) (grub_addr_t) grub_video_coreboot_fbtable->lfb;
 

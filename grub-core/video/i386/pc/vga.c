@@ -117,8 +117,9 @@ grub_video_vga_init (void)
 
 static grub_err_t
 grub_video_vga_setup (unsigned int width, unsigned int height,
+                      grub_video_rotation_t rotation,
                       grub_video_mode_type_t mode_type,
-		      grub_video_mode_type_t mode_mask)
+		                  grub_video_mode_type_t mode_mask)
 {
   grub_err_t err;
 
@@ -142,6 +143,7 @@ grub_video_vga_setup (unsigned int width, unsigned int height,
 
   framebuffer.mode_info.width = VGA_WIDTH;
   framebuffer.mode_info.height = vga_height;
+  framebuffer.mode_info.rotation = rotation;
 
   framebuffer.mode_info.mode_type = GRUB_VIDEO_MODE_TYPE_INDEX_COLOR;
 

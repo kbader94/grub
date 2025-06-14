@@ -349,6 +349,7 @@ grub_gop_get_preferred_mode (unsigned int *width, unsigned int *height)
 
 static grub_err_t
 grub_video_gop_setup (unsigned int width, unsigned int height,
+          grub_video_rotation_t rotation,
 		      unsigned int mode_type,
 		      unsigned int mode_mask __attribute__ ((unused)))
 {
@@ -468,6 +469,8 @@ grub_video_gop_setup (unsigned int width, unsigned int height,
 
   grub_video_gop_fill_mode_info (gop->mode->mode, info,
 				 &framebuffer.mode_info);
+
+  framebuffer.mode_info.rotation = rotation;
 
   framebuffer.ptr = (void *) (grub_addr_t) gop->mode->fb_base;
   framebuffer.offscreen

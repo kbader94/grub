@@ -221,6 +221,7 @@ grub_video_uga_fini (void)
 
 static grub_err_t
 grub_video_uga_setup (unsigned int width, unsigned int height,
+          grub_video_rotation_t rotation,
 		      unsigned int mode_type,
 		      unsigned int mode_mask __attribute__ ((unused)))
 {
@@ -243,6 +244,7 @@ grub_video_uga_setup (unsigned int width, unsigned int height,
       {
 	framebuffer.mode_info.width = w;
 	framebuffer.mode_info.height = h;
+  framebuffer.mode_info.rotation = rotation;
 	framebuffer.mode_info.pitch = uga_pitch;
 	framebuffer.ptr = (grub_uint8_t *) (grub_addr_t) uga_fb;
 
