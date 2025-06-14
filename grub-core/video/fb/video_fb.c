@@ -26,7 +26,6 @@
 #include <grub/bitmap.h>
 #include <grub/dl.h>
 #include <grub/safemath.h>
-#include <grub/env.h>
 
 GRUB_MOD_LICENSE ("GPLv3+");
 
@@ -1362,19 +1361,6 @@ grub_video_fb_create_render_target_from_pointer (struct grub_video_fbrender_targ
   target->data = ptr;
 
   grub_memcpy (&(target->mode_info), mode_info, sizeof (target->mode_info));
-  rot_env = grub_env_get("rotation");
-
-  if (!rot_env) {
-        target->mode_info.rotation = GRUB_VIDEO_ROTATE_NONE;
-    } else if (grub_strcmp(rot_env, "90") == 0) {
-        target->mode_info.rotation = GRUB_VIDEO_ROTATE_90;
-    } else if (grub_strcmp(rot_env, "180") == 0) {
-        target->mode_info.rotation = GRUB_VIDEO_ROTATE_180;
-    } else if (grub_strcmp(rot_env, "270") == 0) {
-        target->mode_info.rotation = GRUB_VIDEO_ROTATE_270;
-    } else {
-        target->mode_info.rotation = GRUB_VIDEO_ROTATE_NONE;
-    }
 
   target->mode_info.original_width = mode_info->width;
   target->mode_info.original_height = mode_info->height;

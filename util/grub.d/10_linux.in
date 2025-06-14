@@ -112,6 +112,27 @@ linux_entry ()
       save_default_entry | grub_add_tab
   fi
 
+  # Pass rotation to linux kernel
+  # If the user has set GRUB_GFXPAYLOAD_LINUX=keep and GRUB_GFXMODE is set
+  rotation_val=0
+  if [ "x$GRUB_GFXPAYLOAD_LINUX" = "xkeep" ] && [ "x$GRUB_GFXMODE" != x ]; then
+    case "$GRUB_GFXMODE" in
+      *-left|*-90)
+        rotation_val=3
+        ;;
+      *-inverted|*-180)
+        rotation_val=2
+        ;;
+      *-right|*-270)
+        rotation_val=1
+        ;;
+    esac
+
+    if [ "x$rotation_val" != x ]; then
+      args="$args fbcon=rotate:$rotation_val"
+    fi
+  fi
+
   # Use ELILO's generic "efifb" when it's known to be available.
   # FIXME: We need an interface to select vesafb in case efifb can't be used.
   if [ "x$GRUB_GFXPAYLOAD_LINUX" = x ]; then
