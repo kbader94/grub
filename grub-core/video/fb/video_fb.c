@@ -31,13 +31,6 @@ GRUB_MOD_LICENSE ("GPLv3+");
 
 typedef grub_err_t (*grub_video_fb_doublebuf_update_screen_t) (void);
 typedef volatile void *framebuf_t;
-
-struct dirty
-{
-  int first_line;
-  int last_line;
-};
-
 static struct
 {
   struct grub_video_fbrender_target *render_target;
@@ -47,8 +40,8 @@ static struct
 
   unsigned int palette_size;
 
-  struct dirty current_dirty;
-  struct dirty previous_dirty;
+  struct grub_video_rect current_dirty;
+  struct grub_video_rect previous_dirty;
 
   /* For page flipping strategy.  */
   int displayed_page;           /* The page # that is the front buffer.  */
@@ -830,15 +823,45 @@ grub_video_fb_unmap_color_int (struct grub_video_fbblit_info * source,
     }
 }
 
+/* Union src rect into dst.  An empty rect has zero width and height.  */
 static void
-dirty (int y, int height)
+dirty_rect_union (grub_video_rect_t *dst, const grub_video_rect_t *src)
 {
+  unsigned int x1, y1, x2, y2;
+
+  if (src->width == 0 || src->height == 0)
+    return;
+  if (dst->width == 0 || dst->height == 0)
+    {
+      *dst = *src;
+      return;
+    }
+
+  x1 = grub_min (dst->x, src->x);
+  y1 = grub_min (dst->y, src->y);
+  x2 = grub_max (dst->x + dst->width, src->x + src->width);
+  y2 = grub_max (dst->y + dst->height, src->y + src->height);
+
+  dst->x = x1;
+  dst->y = y1;
+  dst->width = x2 - x1;
+  dst->height = y2 - y1;
+}
+
+static void
+dirty (int x, int y, int width, int height)
+{
+  grub_video_rect_t rect;
+
   if (framebuffer.render_target != framebuffer.back_target)
     return;
-  if (framebuffer.current_dirty.first_line > y)
-    framebuffer.current_dirty.first_line = y;
-  if (framebuffer.current_dirty.last_line < y + height)
-    framebuffer.current_dirty.last_line = y + height;
+
+  rect.x = x;
+  rect.y = y;
+  rect.width = width;
+  rect.height = height;
+
+  dirty_rect_union (&framebuffer.current_dirty, &rect);
 }
 
 grub_err_t
@@ -896,7 +919,7 @@ grub_video_fb_fill_rect (grub_video_color_t color, int x, int y,
   x += area_x;
   y += area_y;
 
-  dirty (y, height);
+  dirty (x, y, width, height);
 
   /* Use fbblit_info to encapsulate rendering.  */
   target.mode_info = &framebuffer.render_target->mode_info;
@@ -1009,7 +1032,7 @@ grub_video_fb_blit_source (struct grub_video_fbblit_info *source,
   target.data = framebuffer.render_target->data;
 
   /* Do actual blitting.  */
-  dirty (y, height);
+  dirty (x, y, width, height);
   grub_video_fb_dispatch_blit (&target, source, oper, x, y, width, height,
                                offset_x, offset_y);
 
@@ -1061,7 +1084,9 @@ grub_video_fb_scroll (grub_video_color_t color, int dx, int dy)
   width = framebuffer.render_target->viewport.width - grub_abs (dx);
   height = framebuffer.render_target->viewport.height - grub_abs (dy);
 
-  dirty (framebuffer.render_target->viewport.y,
+  dirty (framebuffer.render_target->viewport.x,
+	 framebuffer.render_target->viewport.y,
+	 framebuffer.render_target->viewport.width,
 	 framebuffer.render_target->viewport.height);
 
   if (dx < 0)
@@ -1414,30 +1439,46 @@ grub_video_fb_get_active_render_target (struct grub_video_fbrender_target **targ
 }
 
 static grub_err_t
+copy_dirty_region (volatile void *page, const grub_video_rect_t *region)
+{
+  struct grub_video_mode_info *mode_info = &framebuffer.back_target->mode_info;
+  grub_size_t pitch = mode_info->pitch;
+  grub_size_t row_size = region->width * mode_info->bytes_per_pixel;
+  grub_size_t offset = region->y * pitch
+		       + region->x * mode_info->bytes_per_pixel;
+  unsigned int y;
+
+  /* Shouldn't happen, but if it does we've a bug.  */
+  if (region->width > mode_info->width
+      || region->x > mode_info->width - region->width
+      || region->height > mode_info->height
+      || region->y > mode_info->height - region->height)
+    return GRUB_ERR_BUG;
+
+  for (y = 0; y < region->height; y++)
+    grub_memcpy ((char *) page + offset + y * pitch,
+		 framebuffer.back_target->data + offset + y * pitch,
+		 row_size);
+
+  return GRUB_ERR_NONE;
+}
+
+static grub_err_t
 doublebuf_blit_update_screen (void)
 {
-  if (framebuffer.current_dirty.first_line
-      <= framebuffer.current_dirty.last_line)
+  grub_err_t err;
+
+  if (framebuffer.current_dirty.width > 0
+      && framebuffer.current_dirty.height > 0)
     {
-      grub_size_t copy_size;
-
-      if (grub_sub (framebuffer.current_dirty.last_line,
-		    framebuffer.current_dirty.first_line, &copy_size) ||
-	  grub_mul (framebuffer.back_target->mode_info.pitch, copy_size, &copy_size))
-	{
-	  /* Shouldn't happen, but if it does we've a bug. */
-	  return GRUB_ERR_BUG;
-	}
-
-      grub_memcpy ((char *) framebuffer.pages[0] + framebuffer.current_dirty.first_line *
-		   framebuffer.back_target->mode_info.pitch,
-		   (char *) framebuffer.back_target->data + framebuffer.current_dirty.first_line *
-		   framebuffer.back_target->mode_info.pitch,
-		   copy_size);
+      err = copy_dirty_region (framebuffer.pages[0],
+			       &framebuffer.current_dirty);
+      if (err)
+	return err;
     }
-  framebuffer.current_dirty.first_line
-    = framebuffer.back_target->mode_info.height;
-  framebuffer.current_dirty.last_line = 0;
+
+  grub_memset (&framebuffer.current_dirty, 0,
+	       sizeof (framebuffer.current_dirty));
 
   return GRUB_ERR_NONE;
 }
@@ -1470,8 +1511,8 @@ grub_video_fb_doublebuf_blit_init (struct grub_video_fbrender_target **back,
   framebuffer.pages[0] = framebuf;
   framebuffer.displayed_page = 0;
   framebuffer.render_page = 0;
-  framebuffer.current_dirty.first_line = mode_info.height;
-  framebuffer.current_dirty.last_line = 0;
+  grub_memset (&framebuffer.current_dirty, 0,
+	       sizeof (framebuffer.current_dirty));
 
   return GRUB_ERR_NONE;
 }
@@ -1481,37 +1522,21 @@ doublebuf_pageflipping_update_screen (void)
 {
   int new_displayed_page;
   grub_err_t err;
-  int first_line, last_line;
+  grub_video_rect_t region = framebuffer.current_dirty;
 
-  first_line = framebuffer.current_dirty.first_line;
-  last_line = framebuffer.current_dirty.last_line;
-  if (first_line > framebuffer.previous_dirty.first_line)
-    first_line = framebuffer.previous_dirty.first_line;
-  if (last_line < framebuffer.previous_dirty.last_line)
-    last_line = framebuffer.previous_dirty.last_line;
+  dirty_rect_union (&region, &framebuffer.previous_dirty);
 
-  if (first_line <= last_line)
+  if (region.width > 0 && region.height > 0)
     {
-      grub_size_t copy_size;
-
-      if (grub_sub (last_line, first_line, &copy_size) ||
-	  grub_mul (framebuffer.back_target->mode_info.pitch, copy_size, &copy_size))
-	{
-	  /* Shouldn't happen, but if it does we've a bug. */
-	  return GRUB_ERR_BUG;
-	}
-
-      grub_memcpy ((char *) framebuffer.pages[framebuffer.render_page] + first_line *
-		   framebuffer.back_target->mode_info.pitch,
-		   (char *) framebuffer.back_target->data + first_line *
-		   framebuffer.back_target->mode_info.pitch,
-		   copy_size);
+      err = copy_dirty_region (framebuffer.pages[framebuffer.render_page],
+			       &region);
+      if (err)
+	return err;
     }
 
   framebuffer.previous_dirty = framebuffer.current_dirty;
-  framebuffer.current_dirty.first_line
-    = framebuffer.back_target->mode_info.height;
-  framebuffer.current_dirty.last_line = 0;
+  grub_memset (&framebuffer.current_dirty, 0,
+	       sizeof (framebuffer.current_dirty));
 
   /* Swap the page numbers in the framebuffer struct.  */
   new_displayed_page = framebuffer.render_page;
@@ -1570,12 +1595,10 @@ doublebuf_pageflipping_init (struct grub_video_mode_info *mode_info,
   framebuffer.pages[0] = page0_ptr;
   framebuffer.pages[1] = page1_ptr;
 
-  framebuffer.current_dirty.first_line
-    = framebuffer.back_target->mode_info.height;
-  framebuffer.current_dirty.last_line = 0;
-  framebuffer.previous_dirty.first_line
-    = framebuffer.back_target->mode_info.height;
-  framebuffer.previous_dirty.last_line = 0;
+  grub_memset (&framebuffer.current_dirty, 0,
+	       sizeof (framebuffer.current_dirty));
+  grub_memset (&framebuffer.previous_dirty, 0,
+	       sizeof (framebuffer.previous_dirty));
 
   /* Set the framebuffer memory data pointer and display the right page.  */
   err = set_page_in (framebuffer.displayed_page);
@@ -1661,9 +1684,8 @@ grub_video_fb_setup (unsigned int mode_type, unsigned int mode_mask,
   framebuffer.displayed_page = 0;
   framebuffer.render_page = 0;
   framebuffer.set_page = 0;
-  framebuffer.current_dirty.first_line
-    = framebuffer.back_target->mode_info.height;
-  framebuffer.current_dirty.last_line = 0;
+  grub_memset (&framebuffer.current_dirty, 0,
+	       sizeof (framebuffer.current_dirty));
 
   mode_info->mode_type &= ~GRUB_VIDEO_MODE_TYPE_DOUBLE_BUFFERED;
 
