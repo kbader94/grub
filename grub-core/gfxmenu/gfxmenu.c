@@ -57,6 +57,8 @@ grub_gfxmenu_try (int entry, grub_menu_t menu, int nested)
   struct grub_menu_viewer *instance;
   grub_err_t err;
   struct grub_video_mode_info mode_info;
+  unsigned int render_width;
+  unsigned int render_height;
 
   theme_path = grub_env_get ("theme");
   if (! theme_path)
@@ -66,6 +68,9 @@ grub_gfxmenu_try (int entry, grub_menu_t menu, int nested)
   err = grub_video_get_info (&mode_info);
   if (err)
     return err;
+
+  render_width = grub_video_render_width (&mode_info);
+  render_height = grub_video_render_height (&mode_info);
 
   instance = grub_zalloc (sizeof (*instance));
   if (!instance)
@@ -82,14 +87,14 @@ grub_gfxmenu_try (int entry, grub_menu_t menu, int nested)
 
   if (!cached_view || grub_strcmp (cached_view->theme_path,
 				   full_theme_path ? : theme_path) != 0
-      || cached_view->screen.width != mode_info.width
-      || cached_view->screen.height != mode_info.height)
+      || cached_view->screen.width != render_width
+      || cached_view->screen.height != render_height)
     {
       grub_gfxmenu_view_destroy (cached_view);
       /* Create the view.  */
       cached_view = grub_gfxmenu_view_new (full_theme_path ? : theme_path,
-					   mode_info.width,
-					   mode_info.height);
+					   render_width,
+					   render_height);
     }
   grub_free (full_theme_path);
 
@@ -109,11 +114,11 @@ grub_gfxmenu_try (int entry, grub_menu_t menu, int nested)
   view->nested = nested;
   view->first_timeout = -1;
 
-  grub_video_set_viewport (0, 0, mode_info.width, mode_info.height);
+  grub_video_set_viewport (0, 0, render_width, render_height);
   if (view->double_repaint)
     {
       grub_video_swap_buffers ();
-      grub_video_set_viewport (0, 0, mode_info.width, mode_info.height);
+      grub_video_set_viewport (0, 0, render_width, render_height);
     }
 
   grub_gfxmenu_view_draw (view);

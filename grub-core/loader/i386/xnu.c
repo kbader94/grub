@@ -815,6 +815,8 @@ static grub_err_t
 grub_xnu_set_video (struct grub_xnu_boot_params_common *params)
 {
   struct grub_video_mode_info mode_info;
+  unsigned int render_width;
+  unsigned int render_height;
   char *tmp;
   const char *modevar;
   void *framebuffer;
@@ -847,12 +849,15 @@ grub_xnu_set_video (struct grub_xnu_boot_params_common *params)
   if (err)
     return err;
 
+  render_width = grub_video_render_width (&mode_info);
+  render_height = grub_video_render_height (&mode_info);
+
   if (grub_xnu_bitmap)
      {
        if (grub_xnu_bitmap_mode == GRUB_XNU_BITMAP_STRETCH)
 	 err = grub_video_bitmap_create_scaled (&bitmap,
-						mode_info.width,
-						mode_info.height,
+						render_width,
+						render_height,
 						grub_xnu_bitmap,
 						GRUB_VIDEO_BITMAP_SCALE_METHOD_BEST);
        else
@@ -863,8 +868,8 @@ grub_xnu_set_video (struct grub_xnu_boot_params_common *params)
     {
       if (grub_xnu_bitmap_mode == GRUB_XNU_BITMAP_STRETCH)
 	err = grub_video_bitmap_create_scaled (&bitmap,
-					       mode_info.width,
-					       mode_info.height,
+					       render_width,
+					       render_height,
 					       grub_xnu_bitmap,
 					       GRUB_VIDEO_BITMAP_SCALE_METHOD_BEST);
       else
@@ -875,9 +880,9 @@ grub_xnu_set_video (struct grub_xnu_boot_params_common *params)
     {
       int x, y;
 
-      x = mode_info.width - bitmap->mode_info.width;
+      x = render_width - bitmap->mode_info.width;
       x /= 2;
-      y = mode_info.height - bitmap->mode_info.height;
+      y = render_height - bitmap->mode_info.height;
       y /= 2;
       err = grub_video_blit_bitmap (bitmap,
 				    GRUB_VIDEO_BLIT_REPLACE,
@@ -886,9 +891,9 @@ grub_xnu_set_video (struct grub_xnu_boot_params_common *params)
 				    x < 0 ? -x : 0,
 				    y < 0 ? -y : 0,
 				    min (bitmap->mode_info.width,
-					 mode_info.width),
+					 render_width),
 				    min (bitmap->mode_info.height,
-					 mode_info.height));
+					 render_height));
     }
   if (err)
     {

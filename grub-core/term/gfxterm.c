@@ -333,6 +333,8 @@ grub_gfxterm_fullscreen (void)
 {
   const char *font_name;
   struct grub_video_mode_info mode_info;
+  unsigned int render_width;
+  unsigned int render_height;
   grub_video_color_t color;
   grub_err_t err;
   int double_redraw;
@@ -343,6 +345,9 @@ grub_gfxterm_fullscreen (void)
   if (err)
     return err;
 
+  render_width = grub_video_render_width (&mode_info);
+  render_height = grub_video_render_height (&mode_info);
+
   grub_video_set_active_render_target (GRUB_VIDEO_RENDER_TARGET_DISPLAY);
 
   double_redraw = mode_info.mode_type & GRUB_VIDEO_MODE_TYPE_DOUBLE_BUFFERED
@@ -350,11 +355,11 @@ grub_gfxterm_fullscreen (void)
 
   /* Make sure screen is set to the default background color.  */
   color = grub_video_map_rgba_color (grub_gfxterm_background.default_bg_color);
-  grub_video_fill_rect (color, 0, 0, mode_info.width, mode_info.height);
+  grub_video_fill_rect (color, 0, 0, render_width, render_height);
   if (double_redraw)
     {
       grub_video_swap_buffers ();
-      grub_video_fill_rect (color, 0, 0, mode_info.width, mode_info.height);
+      grub_video_fill_rect (color, 0, 0, render_width, render_height);
     }
 
   /* Select the font to use.  */
@@ -369,7 +374,7 @@ grub_gfxterm_fullscreen (void)
   grub_gfxterm_decorator_hook = NULL;
 
   return grub_gfxterm_set_window (GRUB_VIDEO_RENDER_TARGET_DISPLAY,
-				  0, 0, mode_info.width, mode_info.height,
+				  0, 0, render_width, render_height,
 				  double_redraw,
 				  font, DEFAULT_BORDER_WIDTH);
 }
