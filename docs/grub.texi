@@ -1535,7 +1535,17 @@ Set the resolution used on the @samp{gfxterm} graphical terminal.  Note that
 you can only use modes which your graphics card supports via VESA BIOS
 Extensions (VBE), so for example native LCD panel resolutions may not be
 available.  The default is @samp{auto}, which tries to select a preferred
-resolution.  @xref{gfxmode}.
+resolution.  A rotation suffix such as @samp{800x1280-left} rotates the
+screen for displays mounted sideways.  @xref{gfxmode}.
+
+When @samp{gfxterm} is in use and the first entry of this variable
+carries a rotation suffix, @command{grub-mkconfig} passes a matching
+@samp{fbcon=rotate} option to Linux, including Xen dom0 entries and
+the Linux installations found by @command{os-prober}, so that the
+console has the same orientation as the GRUB menu.  The suffix describes how the panel is
+mounted, so the option is passed whichever video mode Linux ends up
+using.  It is placed before @samp{GRUB_CMDLINE_LINUX}, so an explicit
+@samp{fbcon=rotate} there overrides it.
 
 @item GRUB_BACKGROUND
 Set a background image for use with the @samp{gfxterm} graphical terminal.
@@ -3683,6 +3693,21 @@ separated by commas (@samp{,}) or semicolons (@samp{;}); each will be tried
 in turn until one is found.  Each mode should be either @samp{auto},
 @samp{@var{width}x@var{height}}, or
 @samp{@var{width}x@var{height}x@var{depth}}.
+
+A mode may also carry a rotation suffix:
+@samp{@var{width}x@var{height}[x@var{depth}]-@var{rotation}}, where
+@var{rotation} is one of @samp{90}, @samp{180}, @samp{270} (degrees
+counterclockwise, as in the Linux DRM rotation convention), the
+xrandr-style directions @samp{left} (= @samp{90}), @samp{right}
+(= @samp{270}) and @samp{inverted} (= @samp{180}), or @samp{normal} (no
+rotation).  This is useful on devices whose display panel is mounted
+rotated relative to its natural viewing orientation.  @var{width} and
+@var{height} keep describing the mode requested from the video hardware,
+i.e. the dimensions before the rotation: for example,
+@samp{800x1280-left} selects an 800x1280 physical mode and presents it
+as a 1280x800 landscape screen.  @samp{auto} may carry a rotation suffix
+as well (@samp{auto-left}).  @samp{keep} does not accept a rotation
+suffix, as it keeps the rotation of the current mode.
 
 
 @node gfxpayload

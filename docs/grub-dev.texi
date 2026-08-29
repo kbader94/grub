@@ -1527,10 +1527,13 @@ grub_video_get_info (struct grub_video_mode_info *mode_info);
 @example
 struct grub_video_mode_info
 @{
-  /* Width of the screen.  */
+  /* Width of the physical screen in pixels.  */
   unsigned int width;
-  /* Height of the screen.  */
+  /* Height of the physical screen in pixels.  */
   unsigned int height;
+  /* Rotation applied when rendering, counted in degrees
+     counterclockwise.  */
+  grub_video_rotation_t rotation;
   /* Mode type bitmask.  Contains information like is it Index color or
      RGB mode.  */
   unsigned int mode_type;
@@ -1566,6 +1569,24 @@ struct grub_video_mode_info
 @item Description:
 
 Software developer can use this function to query properties of active rendering taget. Information provided here can be used by other parts of GRUB, like image loaders to convert loaded images to correct screen format to allow more optimized blitters to be used. If there there is no configured video driver with active screen, error @code{GRUB_ERR_BAD_DEVICE} is returned, otherwise @code{mode_info} is filled with valid information and @code{GRUB_ERR_NONE} is returned.
+@end itemize
+
+@subsection grub_video_render_width / grub_video_render_height
+@itemize
+@item Prototype:
+
+@example
+static inline unsigned int
+grub_video_render_width (const struct grub_video_mode_info *mode_info);
+static inline unsigned int
+grub_video_render_height (const struct grub_video_mode_info *mode_info);
+@end example
+@item Description:
+
+Return the dimensions of the render area of a mode: the drawing surface
+all rendering coordinates relate to.  It is the physical screen rotated
+by the rotation of the mode, so width and height are swapped for 90 and
+270 degree rotations.
 @end itemize
 
 @subsection grub_video_get_blit_format
@@ -1691,7 +1712,7 @@ grub_video_set_viewport (unsigned int x, unsigned int y, unsigned int width, uns
 @end example
 @item Description:
 
-Used to specify viewport where draw commands are performed. When viewport is set, all draw commands coordinates relate to those specified by @code{x} and @code{y}. If draw commands try to draw over viewport, they are clipped. If developer requests larger than possible viewport, width and height will be clamped to fit screen. If @code{x} and @code{y} are out of bounds, all functions drawing to screen will not be displayed. In order to maximize viewport, use @code{grub_video_get_info} to query actual screen dimensions and provide that information to this function.
+Used to specify viewport where draw commands are performed. When viewport is set, all draw commands coordinates relate to those specified by @code{x} and @code{y}. If draw commands try to draw over viewport, they are clipped. If developer requests larger than possible viewport, width and height will be clamped to fit screen. If @code{x} and @code{y} are out of bounds, all functions drawing to screen will not be displayed. In order to maximize viewport, use @code{grub_video_render_width} and @code{grub_video_render_height} on the mode information to query the dimensions of the drawing surface and provide that information to this function.  When the video mode is rotated by 90 or 270 degrees these differ from the physical @code{width} and @code{height}.
 @end itemize
 
 @subsection grub_video_get_viewport
