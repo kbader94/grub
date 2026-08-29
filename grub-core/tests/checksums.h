@@ -127,3 +127,6 @@
   { "videotest", 640, 480, 0x1, 256, 32, 4, 0, 8, 8, 8, 16, 8, 24, 8 /* 640x480xbgra8888 */, (grub_uint32_t []) { 0xa260f7dd, 0x3e2f4980, 0x9f13fd96, 0x35c43cb, 0xd886e34b, }, 5 },
   { "videotest", 800, 600, 0x1, 256, 32, 4, 0, 8, 8, 8, 16, 8, 24, 8 /* 800x600xbgra8888 */, (grub_uint32_t []) { 0x41a9bff8, 0xa0d3f7c3, 0x86b1597f, 0x67cb1144, 0xca740407, }, 5 },
   { "videotest", 1024, 768, 0x1, 256, 32, 4, 0, 8, 8, 8, 16, 8, 24, 8 /* 1024x768xbgra8888 */, (grub_uint32_t []) { 0x8f7a3b6d, 0xcb84c6e3, 0x687c071, 0x42793dff, 0x996dbba4, }, 5 },
+  { "videotest", 480, 640, 0x1, 256, 32, 4, 16, 8, 8, 8, 0, 8, 24, 8 /* 480x640xrgba8888 */, (grub_uint32_t []) { 0x16bfa8a8, 0x8de579ff, 0x25e67cf7, 0xbebcada0, 0x700c0016, }, 5 },
+  { "videotest", 720, 480, 0x1, 256, 32, 4, 16, 8, 8, 8, 0, 8, 24, 8 /* 720x480xrgba8888 */, (grub_uint32_t []) { 0xdddf2ade, 0xaed263fb, 0x3bc5b894, 0x48c8f1b1, 0x140678bb, }, 5 },
+  { "videotest", 600, 800, 0x1, 256, 32, 4, 16, 8, 8, 8, 0, 8, 24, 8 /* 600x800xrgba8888 */, (grub_uint32_t []) { 0x66b6463c, 0x919c855, 0xb9e95aee, 0xd646d487, 0xdde40969, }, 5 },

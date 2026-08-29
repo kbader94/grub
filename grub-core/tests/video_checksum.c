@@ -248,6 +248,27 @@ struct grub_video_mode_info grub_test_video_modes[GRUB_TEST_VIDEO_ALL_N_MODES] =
     .pitch = 1024 * 4,
     GRUB_VIDEO_MI_BGRA8888()
   },
+  {
+    .width = 480,
+    .height = 640,
+    .pitch = 480 * 4,
+    .rotation = GRUB_VIDEO_ROTATE_90,
+    GRUB_VIDEO_MI_RGBA8888()
+  },
+  {
+    .width = 720,
+    .height = 480,
+    .pitch = 720 * 4,
+    .rotation = GRUB_VIDEO_ROTATE_180,
+    GRUB_VIDEO_MI_RGBA8888()
+  },
+  {
+    .width = 600,
+    .height = 800,
+    .pitch = 600 * 4,
+    .rotation = GRUB_VIDEO_ROTATE_270,
+    GRUB_VIDEO_MI_RGBA8888()
+  },
 };
 
 #ifdef GRUB_MACHINE_EMU

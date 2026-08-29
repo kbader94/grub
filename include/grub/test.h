@@ -110,7 +110,7 @@ grub_video_checksum_get_modename (void);
 
 
 #define GRUB_TEST_VIDEO_SMALL_N_MODES 7
-#define GRUB_TEST_VIDEO_ALL_N_MODES 31
+#define GRUB_TEST_VIDEO_ALL_N_MODES 34
 
 extern struct grub_video_mode_info grub_test_video_modes[GRUB_TEST_VIDEO_ALL_N_MODES];
 
