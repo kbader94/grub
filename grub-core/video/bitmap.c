@@ -79,6 +79,7 @@ grub_video_bitmap_create (struct grub_video_bitmap **bitmap,
   mode_info->width = width;
   mode_info->height = height;
   mode_info->blit_format = blit_format;
+  mode_info->rotation = GRUB_VIDEO_ROTATE_NONE;
 
   switch (blit_format)
     {

@@ -73,7 +73,24 @@ typedef enum grub_video_mode_type
     GRUB_VIDEO_MODE_TYPE_NONCHAIN4        = 0x00080000,
     GRUB_VIDEO_MODE_TYPE_CGA              = 0x00100000,
     GRUB_VIDEO_MODE_TYPE_INFO_MASK        = 0x00FF0000,
+
+    /* Defines used to specify the screen rotation.  */
+    GRUB_VIDEO_MODE_TYPE_ROTATION_MASK    = 0x03000000,
+#define GRUB_VIDEO_MODE_TYPE_ROTATION_POS 24
   } grub_video_mode_type_t;
+
+/*
+ * Screen rotation in degrees counterclockwise.  The values encode
+ * the GRUB_VIDEO_MODE_TYPE_ROTATION_MASK bit field and must not be
+ * reordered.
+ */
+typedef enum grub_video_rotation
+  {
+    GRUB_VIDEO_ROTATE_NONE,
+    GRUB_VIDEO_ROTATE_90,
+    GRUB_VIDEO_ROTATE_180,
+    GRUB_VIDEO_ROTATE_270
+  } grub_video_rotation_t;
 
 /* The basic render target representing the whole display.  This always
    renders to the back buffer when double-buffering is in use.  */
@@ -122,11 +139,14 @@ enum grub_video_blit_operators
 
 struct grub_video_mode_info
 {
-  /* Width of the screen.  */
+  /* Width of the physical screen in pixels.  */
   unsigned int width;
 
-  /* Height of the screen.  */
+  /* Height of the physical screen in pixels.  */
   unsigned int height;
+
+  /* Rotation applied when rendering to the physical framebuffer.  */
+  grub_video_rotation_t rotation;
 
   /* Mode type bitmask.  Contains information like is it Index color or
      RGB mode.  */
@@ -197,6 +217,30 @@ struct grub_video_rect
   unsigned height;
 };
 typedef struct grub_video_rect grub_video_rect_t;
+
+/*
+ * The render area of a mode: the dimensions rendering code works in.
+ * It is the physical screen rotated by the rotation of the mode, so
+ * width and height are swapped for 90 and 270 degree rotations.  This
+ * is the whole drawing surface; the viewport is a sub-rectangle of it.
+ */
+static inline unsigned int
+grub_video_render_width (const struct grub_video_mode_info *mode_info)
+{
+  if (mode_info->rotation == GRUB_VIDEO_ROTATE_90
+      || mode_info->rotation == GRUB_VIDEO_ROTATE_270)
+    return mode_info->height;
+  return mode_info->width;
+}
+
+static inline unsigned int
+grub_video_render_height (const struct grub_video_mode_info *mode_info)
+{
+  if (mode_info->rotation == GRUB_VIDEO_ROTATE_90
+      || mode_info->rotation == GRUB_VIDEO_ROTATE_270)
+    return mode_info->width;
+  return mode_info->height;
+}
 
 struct grub_video_signed_rect
 {

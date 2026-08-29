@@ -191,6 +191,10 @@ grub_video_sdl_setup (unsigned int width, unsigned int height,
 	= grub_video_get_blit_format (&mode_info);
     }
 
+  /* The rotation is carried in the mode type bits.  */
+  mode_info.rotation = (mode_type & GRUB_VIDEO_MODE_TYPE_ROTATION_MASK)
+                       >> GRUB_VIDEO_MODE_TYPE_ROTATION_POS;
+
   err = grub_video_fb_create_render_target_from_pointer (&sdl_render_target,
 							 &mode_info,
 							 surface->pixels);

@@ -49,6 +49,9 @@ grub_video_fbblit_replace (struct grub_video_fbblit_info *dst,
   grub_uint8_t src_alpha;
   grub_video_color_t src_color;
   grub_video_color_t dst_color;
+  struct grub_video_mode_info *mi = dst->mode_info;
+  int dst_x;
+  int dst_y;
 
   for (j = 0; j < height; j++)
     {
@@ -62,7 +65,9 @@ grub_video_fbblit_replace (struct grub_video_fbblit_info *dst,
 	  dst_color = grub_video_fb_map_rgba (src_red, src_green,
 					      src_blue, src_alpha);
 
-	  set_pixel (dst, x + i, y + j, dst_color);
+	  dst_x = x + grub_video_fb_transform_x (i, j, mi);
+	  dst_y = y + grub_video_fb_transform_y (i, j, mi);
+	  set_pixel (dst, dst_x, dst_y, dst_color);
 	}
     }
 }
@@ -1168,6 +1173,7 @@ grub_video_fbblit_blend (struct grub_video_fbblit_info *dst,
 {
   int i;
   int j;
+  struct grub_video_mode_info *mi = dst->mode_info;
 
   for (j = 0; j < height; j++)
     {
@@ -1183,6 +1189,8 @@ grub_video_fbblit_blend (struct grub_video_fbblit_info *dst,
           grub_uint8_t dst_alpha;
           grub_video_color_t src_color;
           grub_video_color_t dst_color;
+          int dst_x;
+          int dst_y;
 
           src_color = get_pixel (src, i + offset_x, j + offset_y);
           grub_video_fb_unmap_color_int (src, src_color, &src_red, &src_green,
@@ -1191,15 +1199,18 @@ grub_video_fbblit_blend (struct grub_video_fbblit_info *dst,
           if (src_alpha == 0)
             continue;
 
+          dst_x = x + grub_video_fb_transform_x (i, j, mi);
+          dst_y = y + grub_video_fb_transform_y (i, j, mi);
+
           if (src_alpha == 255)
             {
               dst_color = grub_video_fb_map_rgba (src_red, src_green,
 						  src_blue, src_alpha);
-              set_pixel (dst, x + i, y + j, dst_color);
+              set_pixel (dst, dst_x, dst_y, dst_color);
               continue;
             }
 
-          dst_color = get_pixel (dst, x + i, y + j);
+          dst_color = get_pixel (dst, dst_x, dst_y);
 
           grub_video_fb_unmap_color_int (dst, dst_color, &dst_red,
 					 &dst_green, &dst_blue, &dst_alpha);
@@ -1212,7 +1223,7 @@ grub_video_fbblit_blend (struct grub_video_fbblit_info *dst,
           dst_color = grub_video_fb_map_rgba (dst_red, dst_green, dst_blue,
 					      dst_alpha);
 
-          set_pixel (dst, x + i, y + j, dst_color);
+          set_pixel (dst, dst_x, dst_y, dst_color);
         }
     }
 }
@@ -1936,6 +1947,26 @@ grub_video_fb_dispatch_blit (struct grub_video_fbblit_info *target,
 			     unsigned int width, unsigned int height,
 			     int offset_x, int offset_y)
 {
+  if (target->mode_info->rotation != GRUB_VIDEO_ROTATE_NONE)
+    {
+      grub_video_rect_t origin;
+
+      origin.x = x;
+      origin.y = y;
+      origin.width = 1;
+      origin.height = 1;
+      origin = grub_video_fb_transform_rectangle (origin, target->mode_info);
+
+      /* Rotated targets only use the generic replace and blend blitters.  */
+      if (oper == GRUB_VIDEO_BLIT_REPLACE)
+	grub_video_fbblit_replace (target, source, origin.x, origin.y,
+				   width, height, offset_x, offset_y);
+      else
+	grub_video_fbblit_blend (target, source, origin.x, origin.y,
+				 width, height, offset_x, offset_y);
+      return;
+    }
+
   if (oper == GRUB_VIDEO_BLIT_REPLACE)
     {
       /* Try to figure out more optimized version for replace operator.  */

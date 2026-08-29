@@ -184,6 +184,7 @@ grub_video_gop_fill_real_mode_info (unsigned mode,
   out->number_of_colors = 256;
   out->width = in->width;
   out->height = in->height;
+  out->rotation = GRUB_VIDEO_ROTATE_NONE;
   out->mode_type = GRUB_VIDEO_MODE_TYPE_RGB;
   out->bpp = grub_video_gop_get_bpp (in);
   out->bytes_per_pixel = out->bpp >> 3;
@@ -244,6 +245,7 @@ grub_video_gop_fill_mode_info (unsigned mode,
   out->number_of_colors = 256;
   out->width = in->width;
   out->height = in->height;
+  out->rotation = GRUB_VIDEO_ROTATE_NONE;
   out->mode_type = GRUB_VIDEO_MODE_TYPE_RGB;
   out->bytes_per_pixel = sizeof (struct grub_efi_gop_blt_pixel);
   out->bpp = out->bytes_per_pixel << 3;
@@ -489,6 +491,11 @@ grub_video_gop_setup (unsigned int width, unsigned int height,
 				     &framebuffer.mode_info);
       buffer = framebuffer.ptr;
     }
+
+  /* The rotation is carried in the mode type bits.  */
+  framebuffer.mode_info.rotation
+    = (mode_type & GRUB_VIDEO_MODE_TYPE_ROTATION_MASK)
+      >> GRUB_VIDEO_MODE_TYPE_ROTATION_POS;
 
   grub_dprintf ("video", "GOP: initialising FB @ %p %dx%dx%d\n",
 		framebuffer.ptr, framebuffer.mode_info.width,

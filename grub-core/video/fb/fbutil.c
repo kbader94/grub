@@ -149,3 +149,39 @@ set_pixel (struct grub_video_fbblit_info *source,
       break;
     }
 }
+
+/* Transform a rectangle from render coordinates to physical coordinates.  */
+grub_video_rect_t
+grub_video_fb_transform_rectangle (grub_video_rect_t render,
+				   const struct grub_video_mode_info *mi)
+{
+  grub_video_rect_t physical;
+
+  switch (mi->rotation)
+    {
+    case GRUB_VIDEO_ROTATE_90:
+      physical.x = render.y;
+      physical.y = mi->height - render.x - render.width;
+      physical.width = render.height;
+      physical.height = render.width;
+      return physical;
+
+    case GRUB_VIDEO_ROTATE_180:
+      physical.x = mi->width - render.x - render.width;
+      physical.y = mi->height - render.y - render.height;
+      physical.width = render.width;
+      physical.height = render.height;
+      return physical;
+
+    case GRUB_VIDEO_ROTATE_270:
+      physical.x = mi->width - render.y - render.height;
+      physical.y = render.x;
+      physical.width = render.height;
+      physical.height = render.width;
+      return physical;
+
+    case GRUB_VIDEO_ROTATE_NONE:
+    default:
+      return render;
+    }
+}

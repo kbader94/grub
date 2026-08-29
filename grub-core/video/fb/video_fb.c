@@ -452,25 +452,32 @@ grub_err_t
 grub_video_fb_set_viewport (unsigned int x, unsigned int y,
 			    unsigned int width, unsigned int height)
 {
-  /* Make sure viewport is within screen dimensions.  If viewport was set
-     to be out of the screen, mark its size as zero.  */
-  if (x > framebuffer.render_target->mode_info.width)
+  const struct grub_video_mode_info *mi;
+  unsigned int render_width;
+  unsigned int render_height;
+
+  mi = &framebuffer.render_target->mode_info;
+  render_width = grub_video_render_width (mi);
+  render_height = grub_video_render_height (mi);
+
+  /* Make sure viewport is within render area dimensions.  */
+  if (x > render_width)
     {
       x = 0;
       width = 0;
     }
 
-  if (y > framebuffer.render_target->mode_info.height)
+  if (y > render_height)
     {
       y = 0;
       height = 0;
     }
 
-  if (x + width > framebuffer.render_target->mode_info.width)
-    width = framebuffer.render_target->mode_info.width - x;
+  if (x + width > render_width)
+    width = render_width - x;
 
-  if (y + height > framebuffer.render_target->mode_info.height)
-    height = framebuffer.render_target->mode_info.height - y;
+  if (y + height > render_height)
+    height = render_height - y;
 
   framebuffer.render_target->viewport.x = x;
   framebuffer.render_target->viewport.y = y;
@@ -500,25 +507,32 @@ grub_err_t
 grub_video_fb_set_region (unsigned int x, unsigned int y,
                           unsigned int width, unsigned int height)
 {
-  /* Make sure region is within screen dimensions.  If region was set
-     to be out of the screen, mark its size as zero.  */
-  if (x > framebuffer.render_target->mode_info.width)
+  const struct grub_video_mode_info *mi;
+  unsigned int render_width;
+  unsigned int render_height;
+
+  mi = &framebuffer.render_target->mode_info;
+  render_width = grub_video_render_width (mi);
+  render_height = grub_video_render_height (mi);
+
+  /* Make sure region is within render area dimensions.  */
+  if (x > render_width)
     {
       x = 0;
       width = 0;
     }
 
-  if (y > framebuffer.render_target->mode_info.height)
+  if (y > render_height)
     {
       y = 0;
       height = 0;
     }
 
-  if (x + width > framebuffer.render_target->mode_info.width)
-    width = framebuffer.render_target->mode_info.width - x;
+  if (x + width > render_width)
+    width = render_width - x;
 
-  if (y + height > framebuffer.render_target->mode_info.height)
-    height = framebuffer.render_target->mode_info.height - y;
+  if (y + height > render_height)
+    height = render_height - y;
 
   framebuffer.render_target->region.x = x;
   framebuffer.render_target->region.y = y;
@@ -851,15 +865,19 @@ dirty_rect_union (grub_video_rect_t *dst, const grub_video_rect_t *src)
 static void
 dirty (int x, int y, int width, int height)
 {
+  const struct grub_video_mode_info *mi;
   grub_video_rect_t rect;
 
   if (framebuffer.render_target != framebuffer.back_target)
     return;
 
+  mi = &framebuffer.render_target->mode_info;
+
   rect.x = x;
   rect.y = y;
   rect.width = width;
   rect.height = height;
+  rect = grub_video_fb_transform_rectangle (rect, mi);
 
   dirty_rect_union (&framebuffer.current_dirty, &rect);
 }
@@ -1070,8 +1088,12 @@ grub_video_fb_blit_render_target (struct grub_video_fbrender_target *source,
 grub_err_t
 grub_video_fb_scroll (grub_video_color_t color, int dx, int dy)
 {
+  const struct grub_video_mode_info *mi;
   int width;
   int height;
+  int phys_dx;
+  int phys_dy;
+  grub_video_rect_t phys_vp;
   int src_x;
   int src_y;
   int dst_x;
@@ -1081,39 +1103,46 @@ grub_video_fb_scroll (grub_video_color_t color, int dx, int dy)
   if ((dx == 0) && (dy == 0))
     return GRUB_ERR_NONE;
 
-  width = framebuffer.render_target->viewport.width - grub_abs (dx);
-  height = framebuffer.render_target->viewport.height - grub_abs (dy);
+  mi = &framebuffer.render_target->mode_info;
+
+  phys_dx = grub_video_fb_transform_x (dx, dy, mi);
+  phys_dy = grub_video_fb_transform_y (dx, dy, mi);
+  phys_vp
+    = grub_video_fb_transform_rectangle (framebuffer.render_target->viewport,
+					 mi);
+  width = phys_vp.width - grub_abs (phys_dx);
+  height = phys_vp.height - grub_abs (phys_dy);
 
   dirty (framebuffer.render_target->viewport.x,
 	 framebuffer.render_target->viewport.y,
 	 framebuffer.render_target->viewport.width,
 	 framebuffer.render_target->viewport.height);
 
-  if (dx < 0)
+  if (phys_dx < 0)
     {
-      src_x = framebuffer.render_target->viewport.x - dx;
-      dst_x = framebuffer.render_target->viewport.x;
+      src_x = phys_vp.x - phys_dx;
+      dst_x = phys_vp.x;
     }
   else
     {
-      src_x = framebuffer.render_target->viewport.x;
-      dst_x = framebuffer.render_target->viewport.x + dx;
+      src_x = phys_vp.x;
+      dst_x = phys_vp.x + phys_dx;
     }
 
-  if (dy < 0)
+  if (phys_dy < 0)
     {
-      src_y = framebuffer.render_target->viewport.y - dy;
-      dst_y = framebuffer.render_target->viewport.y;
+      src_y = phys_vp.y - phys_dy;
+      dst_y = phys_vp.y;
     }
   else
     {
-      src_y = framebuffer.render_target->viewport.y;
-      dst_y = framebuffer.render_target->viewport.y + dy;
+      src_y = phys_vp.y;
+      dst_y = phys_vp.y + phys_dy;
     }
 
   /* 2. Check if there is need to copy data.  */
-  if ((grub_abs (dx) < framebuffer.render_target->viewport.width)
-       && (grub_abs (dy) < framebuffer.render_target->viewport.height))
+  if ((grub_abs (phys_dx) < phys_vp.width)
+       && (grub_abs (phys_dy) < phys_vp.height))
     {
       /* 3. Move data in render target.  */
       struct grub_video_fbblit_info target;
@@ -1128,7 +1157,7 @@ grub_video_fb_scroll (grub_video_color_t color, int dx, int dy)
       linelen = width * target.mode_info->bytes_per_pixel;
 #define DO_SCROLL                                                    \
       /* Check vertical direction of the move.  */                   \
-      if (dy < 0 || (dy == 0 && dx < 0))                             \
+      if (phys_dy < 0 || (phys_dy == 0 && phys_dx < 0))              \
 	{                                                            \
 	  dst = (void *) grub_video_fb_get_video_ptr (&target,       \
 						      dst_x, dst_y); \
@@ -1198,9 +1227,13 @@ grub_video_fb_scroll (grub_video_color_t color, int dx, int dy)
 	}
     }
 
-  /* 4. Fill empty space with specified color.  In this implementation
-     there might be colliding areas but at the moment there is no need
-     to optimize this.  */
+  /*
+   * 4. Fill empty space with specified color.  The fills go through
+   * grub_video_fb_fill_rect (), which transforms by itself, so dx and
+   * dy are used in their render coordinate form.  In this
+   * implementation there might be colliding areas but at the moment
+   * there is no need to optimize this.
+   */
 
   /* 4a. Fill top & bottom parts.  */
   if (dy > 0)
@@ -1279,6 +1312,11 @@ grub_video_fb_create_render_target (struct grub_video_fbrender_target **result,
   /* Setup render target format.  */
   target->mode_info.width = width;
   target->mode_info.height = height;
+  /*
+   * Off-screen render targets are only used by text layers and are
+   * never rotated.
+   */
+  target->mode_info.rotation = GRUB_VIDEO_ROTATE_NONE;
   switch (mode_type)
     {
     case GRUB_VIDEO_MODE_TYPE_INDEX_COLOR
@@ -1362,22 +1400,22 @@ grub_video_fb_create_render_target_from_pointer (struct grub_video_fbrender_targ
 
   grub_memcpy (&(target->mode_info), mode_info, sizeof (target->mode_info));
 
-  /* Reset viewport, region and area to match new mode.  */
+  /* Reset viewport, region and area to the render area of the mode.  */
   target->viewport.x = 0;
   target->viewport.y = 0;
-  target->viewport.width = mode_info->width;
-  target->viewport.height = mode_info->height;
+  target->viewport.width = grub_video_render_width (&target->mode_info);
+  target->viewport.height = grub_video_render_height (&target->mode_info);
 
   target->region.x = 0;
   target->region.y = 0;
-  target->region.width = mode_info->width;
-  target->region.height = mode_info->height;
+  target->region.width = target->viewport.width;
+  target->region.height = target->viewport.height;
 
   target->area_enabled = 0;
   target->area.x = 0;
   target->area.y = 0;
-  target->area.width = mode_info->width;
-  target->area.height = mode_info->height;
+  target->area.width = target->viewport.width;
+  target->area.height = target->viewport.height;
   target->area_offset_x = 0;
   target->area_offset_y = 0;
 
@@ -1621,6 +1659,10 @@ grub_video_fb_setup (unsigned int mode_type, unsigned int mode_mask,
 		     volatile void *page1_ptr)
 {
   grub_err_t err;
+
+  /* The rotation is carried in the mode type bits.  */
+  mode_info->rotation = (mode_type & GRUB_VIDEO_MODE_TYPE_ROTATION_MASK)
+			>> GRUB_VIDEO_MODE_TYPE_ROTATION_POS;
 
   /* Do double buffering only if it's either requested or efficient.  */
   if (set_page_in && grub_video_check_mode_flag (mode_type, mode_mask,

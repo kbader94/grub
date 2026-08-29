@@ -124,6 +124,11 @@ grub_video_radeon_fuloong2e_setup (unsigned int width, unsigned int height,
   framebuffer.mode_info.blue_field_pos = 0;
   framebuffer.mode_info.reserved_mask_size = 0;
   framebuffer.mode_info.reserved_field_pos = 0;
+
+  /* The rotation is carried in the mode type bits.  */
+  framebuffer.mode_info.rotation
+    = (mode_type & GRUB_VIDEO_MODE_TYPE_ROTATION_MASK)
+      >> GRUB_VIDEO_MODE_TYPE_ROTATION_POS;
 #ifndef TEST
   framebuffer.mode_info.blit_format
     = grub_video_get_blit_format (&framebuffer.mode_info);

@@ -61,4 +61,47 @@ grub_video_color_t get_pixel (struct grub_video_fbblit_info *source,
 void set_pixel (struct grub_video_fbblit_info *source,
                 unsigned int x, unsigned int y, grub_video_color_t color);
 
+/* Transform an x offset from render coordinates to physical coordinates.  */
+static inline int
+grub_video_fb_transform_x (int dx, int dy,
+                           const struct grub_video_mode_info *mode_info)
+{
+  switch (mode_info->rotation)
+    {
+    case GRUB_VIDEO_ROTATE_90:
+      return dy;
+    case GRUB_VIDEO_ROTATE_180:
+      return -dx;
+    case GRUB_VIDEO_ROTATE_270:
+      return -dy;
+    case GRUB_VIDEO_ROTATE_NONE:
+    default:
+      return dx;
+    }
+}
+
+/* Transform a y offset from render coordinates to physical coordinates.  */
+static inline int
+grub_video_fb_transform_y (int dx, int dy,
+                           const struct grub_video_mode_info *mode_info)
+{
+  switch (mode_info->rotation)
+    {
+    case GRUB_VIDEO_ROTATE_90:
+      return -dx;
+    case GRUB_VIDEO_ROTATE_180:
+      return -dy;
+    case GRUB_VIDEO_ROTATE_270:
+      return dx;
+    case GRUB_VIDEO_ROTATE_NONE:
+    default:
+      return dy;
+    }
+}
+
+/* Transform a rectangle from render to physical coordinates.  */
+grub_video_rect_t
+grub_video_fb_transform_rectangle (grub_video_rect_t render,
+				   const struct grub_video_mode_info *mi);
+
 #endif /* ! GRUB_VBEUTIL_MACHINE_HEADER */

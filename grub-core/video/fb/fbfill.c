@@ -185,25 +185,34 @@ grub_video_fb_fill_dispatch (struct grub_video_fbblit_info *target,
 			     grub_video_color_t color, int x, int y,
 			     unsigned int width, unsigned int height)
 {
+  grub_video_rect_t rect;
+
+  /* Transform the fill rectangle to physical coordinates.  */
+  rect.x = x;
+  rect.y = y;
+  rect.width = width;
+  rect.height = height;
+  rect = grub_video_fb_transform_rectangle (rect, target->mode_info);
+  x = rect.x;
+  y = rect.y;
+  width = rect.width;
+  height = rect.height;
+
   /* Try to figure out more optimized version.  Note that color is already
      mapped to target format so we can make assumptions based on that.  */
   switch (target->mode_info->bytes_per_pixel)
     {
     case 4:
-      grub_video_fbfill_direct32 (target, color, x, y,
-				  width, height);
+      grub_video_fbfill_direct32 (target, color, x, y, width, height);
       return;
     case 3:
-      grub_video_fbfill_direct24 (target, color, x, y,
-				  width, height);
+      grub_video_fbfill_direct24 (target, color, x, y, width, height);
       return;
     case 2:
-      grub_video_fbfill_direct16 (target, color, x, y,
-                                        width, height);
+      grub_video_fbfill_direct16 (target, color, x, y, width, height);
       return;
     case 1:
-      grub_video_fbfill_direct8 (target, color, x, y,
-				       width, height);
+      grub_video_fbfill_direct8 (target, color, x, y, width, height);
       return;
     }
 

@@ -896,6 +896,7 @@ vbe2videoinfo (grub_uint32_t mode,
 
   mode_info->width = vbeinfo->x_resolution;
   mode_info->height = vbeinfo->y_resolution;
+  mode_info->rotation = GRUB_VIDEO_ROTATE_NONE;
   mode_info->mode_type = 0;
   switch (vbeinfo->memory_model)
     {

@@ -178,6 +178,7 @@ grub_util_render_label (const char *label_font,
   width = grub_font_get_string_width (font, text) + 10;
   height = grub_font_get_height (font);
 
+  grub_memset (&mode_info, 0, sizeof (mode_info));
   mode_info.width = width;
   mode_info.height = height;
   mode_info.pitch = width;
