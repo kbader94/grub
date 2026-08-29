@@ -488,16 +488,41 @@ grub_video_edid_preferred_mode (struct grub_video_edid_info *edid_info,
   return grub_error (GRUB_ERR_BAD_DEVICE, "no preferred mode available");
 }
 
-/* Parse <width>x<height>[x<depth>]*/
+/* Parse <width>x<height>[x<depth>][-<rotation>].  */
 static grub_err_t
-parse_modespec (const char *current_mode, int *width, int *height, int *depth)
+parse_modespec (const char *current_mode, int *width, int *height, int *depth,
+		grub_video_rotation_t *rotation)
 {
   const char *value;
   const char *param = current_mode;
+  const char *rotstr;
 
   *width = *height = *depth = -1;
+  *rotation = GRUB_VIDEO_ROTATE_NONE;
 
-  if (grub_strcmp (param, "auto") == 0)
+  /* Find optional rotation suffix.  */
+  rotstr = grub_strrchr (current_mode, '-');
+  if (rotstr != NULL)
+    {
+      if (grub_strcmp (rotstr + 1, "left") == 0
+	  || grub_strcmp (rotstr + 1, "90") == 0)
+	*rotation = GRUB_VIDEO_ROTATE_90;
+      else if (grub_strcmp (rotstr + 1, "right") == 0
+	       || grub_strcmp (rotstr + 1, "270") == 0)
+	*rotation = GRUB_VIDEO_ROTATE_270;
+      else if (grub_strcmp (rotstr + 1, "inverted") == 0
+	       || grub_strcmp (rotstr + 1, "180") == 0)
+	*rotation = GRUB_VIDEO_ROTATE_180;
+      else if (grub_strcmp (rotstr + 1, "normal") == 0
+	       || grub_strcmp (rotstr + 1, "0") == 0)
+	*rotation = GRUB_VIDEO_ROTATE_NONE;
+      else
+	return grub_error (GRUB_ERR_BAD_ARGUMENT,
+			   N_("unknown video mode rotation `%s'"), rotstr + 1);
+    }
+
+  if (grub_strncmp (param, "auto", 4) == 0
+      && (param[4] == '\0' || param + 4 == rotstr))
     {
       *width = *height = 0;
       return GRUB_ERR_NONE;
@@ -639,6 +664,7 @@ grub_video_set_mode (const char *modestring,
       int width = -1;
       int height = -1;
       int depth = -1;
+      grub_video_rotation_t rotation = GRUB_VIDEO_ROTATE_NONE;
       grub_err_t err;
       unsigned int flags = modevalue;
       unsigned int flagmask = modemask;
@@ -688,7 +714,8 @@ grub_video_set_mode (const char *modestring,
 	    continue;
 	}
 
-      err = parse_modespec (current_mode, &width, &height, &depth);
+      err = parse_modespec (current_mode, &width, &height, &depth,
+			    &rotation);
       if (err)
 	{
 	  /* Free memory before returning.  */
@@ -696,6 +723,9 @@ grub_video_set_mode (const char *modestring,
 
 	  return err;
 	}
+
+      /* The rotation is carried in the mode type bits.  */
+      flagmask |= GRUB_VIDEO_MODE_TYPE_ROTATION_MASK;
 
       /* Try out video mode.  */
 
@@ -732,6 +762,14 @@ grub_video_set_mode (const char *modestring,
 	      continue;
 	    }
 
+	  /*
+	   * Repack the rotation on every try.  The suitability check
+	   * below rebuilds flags from the previous adapter's granted
+	   * mode.
+	   */
+	  flags = (flags & ~GRUB_VIDEO_MODE_TYPE_ROTATION_MASK)
+		  | (rotation << GRUB_VIDEO_MODE_TYPE_ROTATION_POS);
+
 	  /* Try to initialize video mode.  */
 	  err = p->setup (width, height, flags, flagmask);
 	  if (err != GRUB_ERR_NONE)
@@ -758,6 +796,14 @@ grub_video_set_mode (const char *modestring,
 	      ? (((GRUB_VIDEO_MODE_TYPE_PURE_TEXT & modemask) != 0)
 		 && ((GRUB_VIDEO_MODE_TYPE_PURE_TEXT & modevalue) == 0))
 	      : ((flags & modemask) != modevalue))
+	    {
+	      p->fini ();
+	      grub_errno = GRUB_ERR_NONE;
+	      continue;
+	    }
+
+	  /* Check that the granted mode honors the requested rotation.  */
+	  if (mode_info.rotation != rotation)
 	    {
 	      p->fini ();
 	      grub_errno = GRUB_ERR_NONE;
