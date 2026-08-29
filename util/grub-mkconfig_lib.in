@@ -200,6 +200,31 @@ grub_file_is_not_garbage ()
   return 0
 }
 
+# Print the fbcon rotate option matching the rotation suffix on the
+# first GRUB_GFXMODE entry, if any.  The suffix describes how the
+# display panel is mounted, and Linux inherits the physical, unrotated
+# framebuffer, so the console needs the same correction whichever
+# video mode it ends up using.  gfxmode and its rotation suffix only
+# take effect when 00_header emits them for the graphical terminal, so
+# match its test.  fbcon rotate values count clockwise, while the
+# gfxmode rotation suffix counts counterclockwise.
+grub_gfxmode_rotation_args ()
+{
+  grub_uses_gfxterm=0
+  for x in ${GRUB_TERMINAL_INPUT} ${GRUB_TERMINAL_OUTPUT}; do
+    if [ xgfxterm = "x$x" ]; then
+      grub_uses_gfxterm=1
+    fi
+  done
+  if [ "x$grub_uses_gfxterm" = x1 ]; then
+    case "${GRUB_GFXMODE%%[,;]*}" in
+      *-left|*-90) echo "fbcon=rotate:3" ;;
+      *-inverted|*-180) echo "fbcon=rotate:2" ;;
+      *-right|*-270) echo "fbcon=rotate:1" ;;
+    esac
+  fi
+}
+
 version_sort ()
 {
   case $version_sort_sort_has_v in

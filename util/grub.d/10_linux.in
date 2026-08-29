@@ -123,6 +123,14 @@ linux_entry ()
       save_default_entry | grub_add_tab
   fi
 
+  # Forward the rotation of the preferred GRUB_GFXMODE entry to the
+  # Linux console.  The option is placed before the user command line,
+  # so an explicit fbcon=rotate overrides it.
+  rotation_args="$(grub_gfxmode_rotation_args)"
+  if [ -n "$rotation_args" ]; then
+      args="$rotation_args $args"
+  fi
+
   # Use ELILO's generic "efifb" when it's known to be available.
   # FIXME: We need an interface to select vesafb in case efifb can't be used.
   if [ "x$GRUB_GFXPAYLOAD_LINUX" = x ]; then

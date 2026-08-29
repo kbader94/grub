@@ -103,6 +103,14 @@ linux_entry_xsm ()
   args="$5"
   xen_args="$6"
   xsm="$7"
+
+  # Forward the rotation of the preferred GRUB_GFXMODE entry to the
+  # dom0 Linux console.  The option is placed before the user command
+  # line, so an explicit fbcon=rotate overrides it.
+  rotation_args="$(grub_gfxmode_rotation_args)"
+  if [ -n "$rotation_args" ]; then
+      args="$rotation_args $args"
+  fi
   # If user wants to enable XSM support, make sure there's
   # corresponding policy file.
   xenpolicy=
